@@ -4,11 +4,12 @@
 	"private": true,
 	"scripts": {
 		"build": "npx hardhat compile",
-		"deploy": "npx hardhat run ./scripts/deploy.js --network POLYGON_ZKEVM_MAINNET",
+		"deploy": "npx hardhat run ./scripts/deploy.js --network mumbai",
 		"node": "npx hardhat node",
 		"deploy-local": "npx hardhat run ./scripts/deploy.js --network localhost"
 	},
 	"dependencies": {
+		"@openzeppelin/contracts": "^4.9.2",
 		"dotenv": "^16.0.2"
 	},
 	"devDependencies": {
