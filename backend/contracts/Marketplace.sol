@@ -51,6 +51,7 @@ contract Marketplace is ERC721, Ownable {
     }
     mapping(uint256 => address) private _nftOwners;
     mapping(address => uint256[]) private _ownerNFTs;
+    mapping(uint256 => uint256) private _listingPrices;
 
     constructor() ERC721("MarketplaceNFT", "MNFT") {}
 
@@ -113,16 +114,16 @@ contract Marketplace is ERC721, Ownable {
         _nftOwners[tokenId] = to;
         _ownerNFTs[to].push(tokenId);
         // Store the relevant metadata for the music NFT
-Music.owner = to;
-Music.title = music.title;
-Music.price = music.price;
-Music.coverArt = music.coverArt;
-Music.rarity = music.rarity;
-Music.artist = music.artist;
-Music.genre = music.genre;
-Music.releaseDate = music.releaseDate;
-Music.audioFile = music.audioFile;
-Music.id = tokenId;
+         Music.owner = to;
+         Music.title = music.title;
+         Music.price = music.price;
+         Music.coverArt = music.coverArt;
+         Music.rarity = music.rarity;
+         Music.artist = music.artist;
+         Music.genre = music.genre;
+         Music.releaseDate = music.releaseDate;
+         Music.audioFile = music.audioFile;
+         Music.id = tokenId;
 
         // Update the music struct with the metadata
     }
@@ -150,6 +151,53 @@ Music.id = tokenId;
         Art.owner = to;
     }
 
+     function createListing(uint256 tokenId, uint256 price) public {
+        address tokenOwner = ownerOf(tokenId);
+        require(tokenOwner != address(0), "Marketplace: Invalid token");
+        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
+       require(_nftOwners(tokenId) == address(0), "Marketplace: nft already listed");
+       require(tokenOwner == msg.sender, "Marketplace: you are not the owner of this NFT");
+        require(_listingPrices[tokenId] == 0, "Marketplace: NFT already listed");
+        require(price > 0, "Marketplace: Invalid price");
+        _listingPrices[tokenId] = price;
+    }
+
+     function removeListing(uint256 tokenId) public {
+        address tokenOwner = ownerOf(tokenId);
+        require(tokenOwner != address(0), "Marketplace: Invalid token");
+        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
+
+        // Additional validation and checks as per your marketplace requirements
+
+        // Remove the listing by resetting the price to 0
+        // Example:
+        // _listingPrices[tokenId] = 0;
+    }
+
+    function purchase(uint256 tokenId) public payable {
+        address tokenOwner = ownerOf(tokenId);
+        require(tokenOwner != address(0), "Marketplace: Invalid token");
+        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
+
+        // Additional validation and checks as per your marketplace requirements
+
+        // Verify that the buyer sent the correct amount of ETH for the purchase
+        // Example:
+        // require(msg.value == _listingPrices[tokenId], "Marketplace: Incorrect payment amount");
+
+        // Transfer ownership of the token to the buyer
+        // Example:
+        // transferFrom(tokenOwner, msg.sender, tokenId);
+
+        // Remove the listing by resetting the price to 0
+        // Example:
+        // _listingPrices[tokenId] = 0;
+
+        // Transfer the payment to the seller
+        // Example:
+        // payable(tokenOwner).transfer(msg.value);
+    }
+
    function _updateOwnership(
     uint256 tokenId,
     address from,
@@ -171,5 +219,7 @@ Music.id = tokenId;
     }
     ownerNFTs.pop();
 }
+
+
 
 }
