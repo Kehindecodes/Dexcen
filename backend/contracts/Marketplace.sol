@@ -53,6 +53,8 @@ contract Marketplace is ERC721, Ownable {
     mapping(address => uint256[]) private _ownerNFTs;
     mapping(uint256 => uint256) private _listingPrices;
 
+event ListCreation(uint256 indexed tokenId, string message);
+event ListRemoval(uint256 indexed tokenId, string message);
     constructor() ERC721("MarketplaceNFT", "MNFT") {}
 
     // Implement ownership tracking
@@ -160,18 +162,24 @@ contract Marketplace is ERC721, Ownable {
         require(_listingPrices[tokenId] == 0, "Marketplace: NFT already listed");
         require(price > 0, "Marketplace: Invalid price");
         _listingPrices[tokenId] = price;
+
+        emit ListCreation(tokenId, "Listing created");
     }
 
      function removeListing(uint256 tokenId) public {
         address tokenOwner = ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
         require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
+        require(_listingPrices[tokenId] > 0, "Marketplace: NFT not listed");
+        require(tokenOwner == msg.sender, "Marketplace: you are not the owner of this NFT");
+       uint256 listingPrice = _listingPrices[tokenId];
+       require(listingPrice > 0, "Marketplace: NFT not listed");
 
-        // Additional validation and checks as per your marketplace requirements
+        _listingPrices[tokenId] = 0;
 
-        // Remove the listing by resetting the price to 0
-        // Example:
-        // _listingPrices[tokenId] = 0;
+        
+emit ListRemoval(tokenId, "Listing removed");
+       
     }
 
     function purchase(uint256 tokenId) public payable {
@@ -179,23 +187,18 @@ contract Marketplace is ERC721, Ownable {
         require(tokenOwner != address(0), "Marketplace: Invalid token");
         require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
 
-        // Additional validation and checks as per your marketplace requirements
-
         // Verify that the buyer sent the correct amount of ETH for the purchase
-        // Example:
-        // require(msg.value == _listingPrices[tokenId], "Marketplace: Incorrect payment amount");
+        require(msg.value == _listingPrices[tokenId], "Marketplace: Incorrect payment amount");
 
         // Transfer ownership of the token to the buyer
-        // Example:
-        // transferFrom(tokenOwner, msg.sender, tokenId);
+        transferFrom(tokenOwner, msg.sender, tokenId);
 
         // Remove the listing by resetting the price to 0
-        // Example:
-        // _listingPrices[tokenId] = 0;
+    
+        _listingPrices[tokenId] = 0;
 
         // Transfer the payment to the seller
-        // Example:
-        // payable(tokenOwner).transfer(msg.value);
+        msg.sender.payable(tokenOwner).transfer(msg.value);
     }
 
    function _updateOwnership(
