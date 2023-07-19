@@ -53,8 +53,9 @@ contract Marketplace is ERC721, Ownable {
     mapping(address => uint256[]) private _ownerNFTs;
     mapping(uint256 => uint256) private _listingPrices;
 
-event ListCreation(uint256 indexed tokenId, string message);
-event ListRemoval(uint256 indexed tokenId, string message);
+event ListCreation(uint256  tokenId, string message);
+event ListRemoval(uint256 tokenId, string message);
+event  PurchaseMade(uint256  tokenId, address buyer, address seller, uint256 price);
     constructor() ERC721("MarketplaceNFT", "MNFT") {}
 
     // Implement ownership tracking
@@ -178,7 +179,7 @@ event ListRemoval(uint256 indexed tokenId, string message);
         _listingPrices[tokenId] = 0;
 
         
-emit ListRemoval(tokenId, "Listing removed");
+     emit ListRemoval(tokenId, "Listing removed");
        
     }
 
@@ -186,7 +187,7 @@ emit ListRemoval(tokenId, "Listing removed");
         address tokenOwner = ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
         require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
-
+ require(_listingPrices[tokenId] > 0, "Marketplace: NFT not listed");
         // Verify that the buyer sent the correct amount of ETH for the purchase
         require(msg.value == _listingPrices[tokenId], "Marketplace: Incorrect payment amount");
 
@@ -198,7 +199,8 @@ emit ListRemoval(tokenId, "Listing removed");
         _listingPrices[tokenId] = 0;
 
         // Transfer the payment to the seller
-        msg.sender.payable(tokenOwner).transfer(msg.value);
+        payable(tokenOwner).transfer(msg.value);
+        emit PurchaseMade(tokenId, msg.sender, tokenOwner, msg.value);
     }
 
    function _updateOwnership(
