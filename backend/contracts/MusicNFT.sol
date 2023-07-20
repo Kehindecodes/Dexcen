@@ -22,6 +22,7 @@ contract MusicNFT is ERC721, Ownable {
     constructor() ERC721("MusicNFT", "MUSIC") {}
 
     mapping(uint256 => Music) private _musicNFTs;
+    mapping()
     uint256 private _nextNFTId = 0;
 
     function ownerOf(uint256 tokenId) public view override returns (address) {
