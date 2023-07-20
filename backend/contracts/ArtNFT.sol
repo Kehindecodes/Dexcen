@@ -82,4 +82,15 @@ function transferArtNFT(uint256 tokenId, address newOwner) public {
 
         emit TokenTransfer(currentOwner, newOwner, tokenId);
     }
+     function approve(address to, uint256 tokenId) public {
+    address tokenOwner = ownerOf(tokenId);
+    require(tokenOwner == msg.sender || isApprovedForAll(tokenOwner, msg.sender), "ArtNFT: Not authorized to approve");
+
+    _approve(to, tokenId);
+}
+function setApprovalForAll(address operator, bool approved) public {
+    require(operator != msg.sender, "ArtNFT: You cannot set approval for yourself");
+
+    _setApprovalForAll(msg.sender, operator, approved);
+}
 }

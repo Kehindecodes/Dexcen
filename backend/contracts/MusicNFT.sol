@@ -98,4 +98,16 @@ contract MusicNFT is ERC721, Ownable {
 
         emit TokenTransfer(currentOwner, newOwner, tokenId);
     }
+
+     function approve(address to, uint256 tokenId) public {
+    address tokenOwner = ownerOf(tokenId);
+    require(tokenOwner == msg.sender || isApprovedForAll(tokenOwner, msg.sender), "musicNFT: Not authorized to approve");
+
+    _approve(to, tokenId);
+}
+function setApprovalForAll(address operator, bool approved) public {
+    require(operator != msg.sender, "musicNFT: You cannot set approval for yourself");
+
+    _setApprovalForAll(msg.sender, operator, approved);
+}
 }
