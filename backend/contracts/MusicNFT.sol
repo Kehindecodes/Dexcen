@@ -28,6 +28,13 @@ contract MusicNFT is ERC721, Ownable {
         return ownerOf(tokenId);
     }
 
+    event TokenTransfer(
+        address indexed from,
+        address indexed to,
+        uint256 tokenId
+    );
+    event TokenMinted(address indexed owner, uint256 tokenId);
+
     function mintMusicNFT(
         string title,
         uint256 price,
@@ -39,8 +46,20 @@ contract MusicNFT is ERC721, Ownable {
         string audioFile,
         address owner
     ) public onlyOwner returns (uint256) {
-        uint256 tokenId = _nextNFTId;
-        _nextNFTId++;
+        bytes32 randomHash = keccak256(
+            abi.encodePacked(
+                title,
+                coverArt,
+                artist,
+                genre,
+                releaseDate,
+                audioFile,
+                block.timestamp
+            )
+        );
+        uint256 tokenId = uint256(randomHash);
+
+        require(!_exists(tokenId), "MusicNFT: Token ID already exists");
 
         _safeMint(owner, tokenId);
 
@@ -58,7 +77,7 @@ contract MusicNFT is ERC721, Ownable {
         );
 
         _musicNFTs[tokenId] = newMusicNFT;
-
+        emit TokenMinted(owner, tokenId);
         return tokenId;
     }
 
@@ -75,5 +94,7 @@ contract MusicNFT is ERC721, Ownable {
 
         Music storage musicNFT = _musicNFTs[tokenId];
         musicNFT.owner = newOwner;
+
+        emit TokenTransfer(currentOwner, newOwner, tokenId);
     }
 }
