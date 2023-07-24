@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MusicNFT is ERC721, Ownable {
+contract MusicNFT is ERC721URIStorage, Ownable {
     struct Music {
         string title;
         uint256 price;
@@ -16,18 +16,17 @@ contract MusicNFT is ERC721, Ownable {
         uint256 releaseDate;
         string audioFile;
         address owner;
-        uint256 id;
     }
 
     constructor() ERC721("MusicNFT", "MUSIC") {}
 
     mapping(uint256 => Music) private _musicNFTs;
-    mapping()
+
     uint256 private _nextNFTId = 0;
 
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        return ownerOf(tokenId);
-    }
+    // function ownerOf(uint256 tokenId) public view override returns (address) {
+    //     return _ownerOf(tokenId);
+    // }
 
     event TokenTransfer(
         address indexed from,
@@ -36,33 +35,20 @@ contract MusicNFT is ERC721, Ownable {
     );
     event TokenMinted(address indexed owner, uint256 tokenId);
 
-    function mintMusicNFT(
-        string title,
+    // Function for users to create and mint their NFTs
+    function createUserNFT(
+        string memory title,
         uint256 price,
-        string coverArt,
-        string rarity,
-        string artist,
-        string genre,
+        string memory coverArt,
+        string memory rarity,
+        string memory artist,
+        string memory genre,
         uint256 releaseDate,
-        string audioFile,
+        string memory audioFile,
         address owner
-    ) public onlyOwner returns (uint256) {
-        bytes32 randomHash = keccak256(
-            abi.encodePacked(
-                title,
-                coverArt,
-                artist,
-                genre,
-                releaseDate,
-                audioFile,
-                block.timestamp
-            )
-        );
-        uint256 tokenId = uint256(randomHash);
-
-        require(!_exists(tokenId), "MusicNFT: Token ID already exists");
-
-        _safeMint(owner, tokenId);
+    ) public {
+        uint256 tokenId = _nextNFTId;
+        _nextNFTId++;
 
         Music memory newMusicNFT = Music(
             title,
@@ -73,18 +59,24 @@ contract MusicNFT is ERC721, Ownable {
             genre,
             releaseDate,
             audioFile,
-            owner,
-            tokenId
+            owner
         );
 
         _musicNFTs[tokenId] = newMusicNFT;
-        emit TokenMinted(owner, tokenId);
-        return tokenId;
+
+        // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
+        // For simplicity, we'll use a placeholder URI here.
+        string memory uri = "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
+
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, uri);
+
+        emit TokenMinted(msg.sender, tokenId);
     }
 
     function transferMusicNFT(uint256 tokenId, address newOwner) public {
         require(_exists(tokenId), "MusicNFT: Token does not exist");
-        address currentOwner = ownerOf(tokenId);
+        address currentOwner = _ownerOf(tokenId);
         require(
             currentOwner == msg.sender ||
                 isApprovedForAll(currentOwner, msg.sender),
@@ -99,15 +91,36 @@ contract MusicNFT is ERC721, Ownable {
         emit TokenTransfer(currentOwner, newOwner, tokenId);
     }
 
-     function approve(address to, uint256 tokenId) public {
-    address tokenOwner = ownerOf(tokenId);
-    require(tokenOwner == msg.sender || isApprovedForAll(tokenOwner, msg.sender), "musicNFT: Not authorized to approve");
+    function approve(address to, uint256 tokenId) public override {
+        address tokenOwner = _ownerOf(tokenId);
+        require(
+            tokenOwner == msg.sender ||
+                isApprovedForAll(tokenOwner, msg.sender),
+            "musicNFT: Not authorized to approve"
+        );
 
-    _approve(to, tokenId);
-}
-function setApprovalForAll(address operator, bool approved) public {
-    require(operator != msg.sender, "musicNFT: You cannot set approval for yourself");
+        _approve(to, tokenId);
+    }
 
-    _setApprovalForAll(msg.sender, operator, approved);
-}
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override {
+        require(
+            operator != msg.sender,
+            "musicNFT: You cannot set approval for yourself"
+        );
+
+        _setApprovalForAll(msg.sender, operator, approved);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
+    }
 }
