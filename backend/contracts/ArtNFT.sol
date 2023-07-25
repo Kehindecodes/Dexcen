@@ -5,70 +5,69 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-
-contract ArtNFT is ERC721, Ownable {
-    
+contract ArtNFT is ERC721URIStorage, Ownable {
     struct Art {
         string title;
         uint256 price;
         string artist;
-        string image;
         string rarity;
         uint256 yearCreated;
+        string image;
         address owner;
-        uint256 id;
     }
 
     constructor() ERC721("ArtNFT", "ART") {}
 
     mapping(uint256 => Art) private _artNFTs;
     uint256 private _nextNFTId = 0;
- event TokenTransfer(
+    event TokenTransfer(
         address indexed from,
         address indexed to,
         uint256 tokenId
     );
     event TokenMinted(address indexed owner, uint256 tokenId);
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        return ownerOf(tokenId);
+
+    // function ownerOf(uint256 tokenId) public view override returns (address) {
+    //     return ownerOf(tokenId);
+    // }
+
+    function createUserNFT(
+        string memory title,
+        uint256 price,
+        string memory rarity,
+        string memory artist,
+        uint256 yearCreated,
+        string memory image,
+        address owner
+    ) public {
+        uint256 tokenId = _nextNFTId;
+        _nextNFTId++;
+
+        Art memory newArtNFT = Art(
+            title,
+            price,
+            rarity,
+            artist,
+            yearCreated,
+            image,
+            owner
+        );
+
+        _artNFTs[tokenId] = newArtNFT;
+
+        // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
+        // For simplicity, we'll use a placeholder URI here.
+        string memory uri = "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
+
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, uri);
+
+        emit TokenMinted(msg.sender, tokenId);
     }
 
-    function mintArtNFT(
-        string title,
-        uint256 price,
-        string artist,
-        string image,
-        string rarity,
-        uint256 yearCreated,
-        address owner
-    ) public onlyOwner returns (uint256) {
-
-        bytes32 randomHash = keccak256(
-            abi.encodePacked(
-                title,
-                image,
-                artist,
-                rarity,
-                yearCreated,
-                block.timestamp
-
-            )
-        )
-        uint256 tokenId = uint256(randomHash);
-
-        require(!_exists(tokenId) , "NFT already exists");          
-        _safeMint(owner, tokenId);
-     
-     Art memory newArtNFT = Art(title, price, artist, image, rarity, yearCreated, owner, tokenId);
-     _artNFTs[tokenId] = newArtNFT;
-
-     emit TokenMinted(owner, tokenId);
-     return tokenId;
-}
-
-function transferArtNFT(uint256 tokenId, address newOwner) public {
+    function transferArtNFT(uint256 tokenId, address newOwner) public {
         require(_exists(tokenId), "ArtNFT: Token does not exist");
-        address currentOwner = ownerOf(tokenId);
+        address currentOwner = _ownerOf(tokenId);
         require(
             currentOwner == msg.sender ||
                 isApprovedForAll(currentOwner, msg.sender),
@@ -82,15 +81,37 @@ function transferArtNFT(uint256 tokenId, address newOwner) public {
 
         emit TokenTransfer(currentOwner, newOwner, tokenId);
     }
-     function approve(address to, uint256 tokenId) public {
-    address tokenOwner = ownerOf(tokenId);
-    require(tokenOwner == msg.sender || isApprovedForAll(tokenOwner, msg.sender), "ArtNFT: Not authorized to approve");
 
-    _approve(to, tokenId);
-}
-function setApprovalForAll(address operator, bool approved) public {
-    require(operator != msg.sender, "ArtNFT: You cannot set approval for yourself");
+    function approve(address to, uint256 tokenId) public override {
+        address tokenOwner = _ownerOf(tokenId);
+        require(
+            tokenOwner == msg.sender ||
+                isApprovedForAll(tokenOwner, msg.sender),
+            "ArtNFT: Not authorized to approve"
+        );
 
-    _setApprovalForAll(msg.sender, operator, approved);
-}
+        _approve(to, tokenId);
+    }
+
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override {
+        require(
+            operator != msg.sender,
+            "ArtNFT: You cannot set approval for yourself"
+        );
+
+        _setApprovalForAll(msg.sender, operator, approved);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
+    }
 }
