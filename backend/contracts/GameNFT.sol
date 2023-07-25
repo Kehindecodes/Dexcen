@@ -16,16 +16,14 @@ contract GamingNFT is ERC721, Ownable {
         address owner;
         string level;
         string abilities;
-        ItemStats stats;
+        // ItemStats stats;
     }
 
-  
-
-    struct ItemStats {
-        uint256 baseAttackPower;
-        uint256 baseDefensePower;
-        uint256 health;
-    }
+    // struct ItemStats {
+    //     uint256 baseAttackPower;
+    //     uint256 baseDefensePower;
+    //     uint256 health;
+    // }
     struct GamingNFTInfo {
         string name;
         string description;
@@ -50,12 +48,27 @@ contract GamingNFT is ERC721, Ownable {
         uint256 tokenId
     );
     event TokenMinted(address indexed owner, uint256 tokenId);
-    event TokenUpdated(
-        uint256 tokenId,
-        string name,
-        string description,
-        uint256 price,
+    event TokenUpdated(uint256 tokenId);
+
+
+function  createUserNFT( string memory name, uint256 price, string memory image, string memory rarity, string memory level, string memory abilities, address owner, uint256 baseAttackPower, uint256 baseDefensePower, uint256 health) public {
+    uint256 tokenId = _nextNFTId;
+    _nextNFTId++;
+
+    GamingItem memory newGamingNFT = GamingItem(
+        name,
+        image,
+        price,
+        rarity,
+        level,
+        abilities,
+        owner,
+        baseAttackPower,
+        baseDefensePower,
+        health,
     );
+    _gamingNFTs[tokenId] = newGamingNFT;
+}
 
     function mintGamingNFT(GamingNFTInfo memory nftInfo) public onlyOwner {
         uint256 tokenId = _nextNFTId;
@@ -68,26 +81,19 @@ contract GamingNFT is ERC721, Ownable {
         require(bytes(nftInfo.image).length > 0, "Invalid image");
         require(bytes(nftInfo.rarity).length > 0, "Invalid rarity");
         require(bytes(nftInfo.level).length > 0, "Invalid level");
-        require(nftInfo.abilities.length > 0, "Invalid abilities");
-        require(nftInfo.baseAttackPower > 0, "Invalid baseAttackPower");
-        require(nftInfo.baseDefensePower > 0, "Invalid baseDefensePower");
+        require(bytes(nftInfo.abilities).length > 0, "Invalid abilities");
+
         require(nftInfo.health > 0, "Invalid health");
 
         require(!_exists(tokenId), "NFT already exists");
 
         _safeMint(nftInfo.owner, tokenId);
 
-        uint256 abilitiesLength = nftInfo.abilities.length;
-        uint256 totalAttackPower = nftInfo.baseAttackPower +
-            (abilitiesLength * 10);
-        uint256 totalDefensePower = nftInfo.baseDefensePower +
-            (abilitiesLength * 5);
-
-        ItemStats memory stats = ItemStats(
-            totalAttackPower,
-            totalDefensePower,
-            nftInfo.health
-        );
+        // ItemStats memory stats = ItemStats(
+        //     totalAttackPower,
+        //     totalDefensePower,
+        //     nftInfo.health
+        // );
 
         GamingItem storage newGamingNFT = _gamingNFTs[tokenId];
         newGamingNFT.id = tokenId;
@@ -98,7 +104,7 @@ contract GamingNFT is ERC721, Ownable {
         newGamingNFT.rarity = nftInfo.rarity;
         newGamingNFT.owner = nftInfo.owner;
         newGamingNFT.level = nftInfo.level;
-        newGamingNFT.stats = stats;
+        // newGamingNFT.stats = stats;
         newGamingNFT.abilities = nftInfo.abilities;
 
         emit TokenMinted(nftInfo.owner, tokenId);
@@ -107,7 +113,7 @@ contract GamingNFT is ERC721, Ownable {
     function transferGamingNFT(
         uint256 tokenId,
         address newOwner
-    ) public onlyOwner {
+    ) public {
         address tokenOwner = ownerOf(tokenId);
         require(
             tokenOwner == msg.sender ||
@@ -135,14 +141,18 @@ contract GamingNFT is ERC721, Ownable {
     }
 
     function updateGamingNFT(
+        uint256 tokenId,
         string memory image,
         string memory rarity,
         string memory level,
-        string memory abilities,
-        uint256 baseAttackPower,
-        uint256 baseDefensePower,
-        uint256 health
-    ) public onlyOwner {
+        string memory abilities
+    )
+        public
+        // uint256 baseAttackPower,
+        // uint256 baseDefensePower,
+
+        onlyOwner
+    {
         require(_exists(tokenId), "GamingNFT: NFT does not exist");
         GamingItem storage gamingNFT = _gamingNFTs[tokenId];
 
@@ -150,14 +160,8 @@ contract GamingNFT is ERC721, Ownable {
         gamingNFT.rarity = rarity;
         gamingNFT.level = level;
         gamingNFT.abilities = abilities;
-        gamingNFT.stats = ItemStats(baseAttackPower, baseDefensePower, health);
-        emit TokenUpdated(
-            tokenId,
-            name,
-            description,
-            price,
-        
-        );
+        // gamingNFT.stats = ItemStats(baseAttackPower, baseDefensePower, health);
+        emit TokenUpdated(tokenId);
     }
 
     function approve(address to, uint256 tokenId) public override {
