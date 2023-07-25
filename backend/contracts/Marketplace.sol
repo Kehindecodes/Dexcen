@@ -18,15 +18,18 @@ contract Marketplace is ERC721, Ownable {
         Ability[] abilities;
         ItemStats stats;
     }
+
     struct Ability {
         string name;
         string description;
     }
+
     struct ItemStats {
         uint256 attackPower;
         uint256 defensePower;
         uint256 health;
     }
+
     struct Music {
         string title;
         uint256 price;
@@ -37,8 +40,9 @@ contract Marketplace is ERC721, Ownable {
         uint256 releaseDate;
         string audioFile;
         address owner;
-        uint256 id
+        uint256 id;
     }
+
     struct Art {
         string title;
         uint256 price;
@@ -47,184 +51,175 @@ contract Marketplace is ERC721, Ownable {
         string rarity;
         uint256 yearCreated;
         address owner;
-        uint256 id
+        uint256 id;
     }
+
     mapping(uint256 => address) private _nftOwners;
     mapping(address => uint256[]) private _ownerNFTs;
     mapping(uint256 => uint256) private _listingPrices;
+    mapping(uint256 => GamingItem) private _gamingItems;
 
-event ListCreation(uint256  tokenId, string message);
-event ListRemoval(uint256 tokenId, string message);
-event  PurchaseMade(uint256  tokenId, address buyer, address seller, uint256 price);
+    event ListingCreated(uint256 tokenId, string message);
+    event ListingRemoved(uint256 tokenId, string message);
+    event PurchaseMade(
+        uint256 tokenId,
+        address buyer,
+        address seller,
+        uint256 price
+    );
+
     constructor() ERC721("MarketplaceNFT", "MNFT") {}
 
     // Implement ownership tracking
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        return _nftOwners[tokenId];
-    }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override {
-        super.transferFrom(from, to, tokenId);
-        _updateOwnership(tokenId, from, to);
-    }
+    // function transferFrom(address from, address to, uint256 tokenId) public override {
+    //     super.transferFrom(from, to, tokenId);
+    //     _updateOwnership(tokenId, from, to);
+    // }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override {
-        super.safeTransferFrom(from, to, tokenId);
-        _updateOwnership(tokenId, from, to);
-    }
+    // function safeTransferFrom(address from, address to, uint256 tokenId) public override {
+    //     super.safeTransferFrom(from, to, tokenId);
+    //     _updateOwnership(tokenId, from, to);
+    // }
 
-    function mintGamingItem(
-        address to,
-        uint256 tokenId,
-        string memory tokenURI,
-        GamingItem memory item
-    ) public onlyOwner {
-        _mint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
-        _nftOwners[tokenId] = to;
-        _ownerNFTs[to].push(tokenId);
-        // Assign unique attributes or properties to the gaming item
-        GamingItem.id = tokenId;
-        GamingItem.name = item.name;
-        GamingItem.description = item.description;
-        GamingItem.price = item.price;
-        GamingItem.image = item.image;
-        GamingItem.rarity = item.rarity;
-        GamingItem.owner = to;
-        GamingItem.level = item.level;
-        GamingItem.abilities = item.abilities;
-        GamingItem.stats = item.stats;
+    // function mintGamingItem(
+    //     address to,
+    //     uint256 tokenId,
+    //     string memory tokenURI,
+    //     GamingItem memory item
+    // ) public onlyOwner {
+    //     _mint(to, tokenId);
+    //     _setTokenURI(tokenId, tokenURI);
+    //     _nftOwners[tokenId] = to;
+    //     _ownerNFTs[to].push(tokenId);
+    //     // Assign unique attributes or properties to the gaming item
+    //     GamingItem memory newItem = GamingItem(tokenId, "", "", 0, "", "", address(0), "", new Ability[](0), ItemStats(0, 0, 0));
+    //     newItem.name = item.name;
+    //     newItem.description = item.description;
+    //     newItem.price = item.price;
+    //     newItem.image = item.image;
+    //     newItem.rarity = item.rarity;
+    //     newItem.owner = to;
+    //     newItem.level = item.level;
+    //     newItem.abilities = item.abilities;
+    //     newItem.stats = item.stats;
 
-        // Update the item struct with the generated attributes or properties
-    }
+    //     _gamingItems[tokenId] = newItem;
+    // }
 
-    function mintMusic(
-        address to,
-        uint256 tokenId,
-        string memory tokenURI,
-        Music memory music
-    ) public onlyOwner {
-        _mint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
-        _nftOwners[tokenId] = to;
-        _ownerNFTs[to].push(tokenId);
-        // Store the relevant metadata for the music NFT
-         Music.owner = to;
-         Music.title = music.title;
-         Music.price = music.price;
-         Music.coverArt = music.coverArt;
-         Music.rarity = music.rarity;
-         Music.artist = music.artist;
-         Music.genre = music.genre;
-         Music.releaseDate = music.releaseDate;
-         Music.audioFile = music.audioFile;
-         Music.id = tokenId;
+    // function mintArt(
+    //     address to,
+    //     uint256 tokenId,
+    //     string memory tokenURI,
+    //     Art memory art
+    // ) public onlyOwner {
+    //     _mint(to, tokenId);
+    //     _setTokenURI(tokenId, tokenURI);
+    //     _nftOwners[tokenId] = to;
+    //     _ownerNFTs[to].push(tokenId);
+    //     // Store the relevant metadata for the art NFT
+    //     Art memory newArt = Art(art.title, art.price, art.artist, art.image, art.rarity, art.yearCreated, to, tokenId);
 
-        // Update the music struct with the metadata
-    }
+    //     _artItems[tokenId] = newArt;
+    // }
 
-    function mintArt(
-        address to,
-        uint256 tokenId,
-        string memory tokenURI,
-        Art memory art
-    ) public onlyOwner {
-        _mint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
-        _nftOwners[tokenId] = to;
-        _ownerNFTs[to].push(tokenId);
-        // Store the relevant metadata for the art NFT
-        // Update the art struct with the metadata
-        Art.artist = art.artist;
-        Art.image = art.image;
-        Art.rarity = art.rarity;
-        Art.yearCreated = art.yearCreated;
-        Art.id = tokenId;
-        Art.title = art.title;
-        Art.price = art.price;
-        Art.rarity = art.rarity;
-        Art.owner = to;
-    }
+    // function modifyGamingItem(uint256 tokenId, GamingItem memory newItem) public {
+    //     address tokenOwner = ownerOf(tokenId);
+    //     require(tokenOwner == msg.sender, "Marketplace: you are not the owner of this NFT");
 
-     function createListing(uint256 tokenId, uint256 price) public {
+    //     GamingItem storage item = _gamingItems[tokenId];
+    //     item.name = newItem.name;
+    //     item.description = newItem.description;
+    //     item.price = newItem.price;
+    //     item.image = newItem.image;
+    //     item.rarity = newItem.rarity;
+    //     item.level = newItem.level;
+    //     item.abilities = newItem.abilities;
+    //     item.stats = newItem.stats;
+    // }
+
+    function createListing(uint256 tokenId, uint256 price) public {
         address tokenOwner = ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
-        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
-       require(_nftOwners(tokenId) == address(0), "Marketplace: nft already listed");
-       require(tokenOwner == msg.sender, "Marketplace: you are not the owner of this NFT");
-        require(_listingPrices[tokenId] == 0, "Marketplace: NFT already listed");
+        require(
+            _nftOwners[tokenId] == tokenOwner,
+            "Marketplace: Invalid token owner"
+        );
+        require(
+            _listingPrices[tokenId] == 0,
+            "Marketplace: NFT already listed"
+        );
+        require(
+            tokenOwner == msg.sender,
+            "Marketplace: you are not the owner of this NFT"
+        );
         require(price > 0, "Marketplace: Invalid price");
         _listingPrices[tokenId] = price;
 
-        emit ListCreation(tokenId, "Listing created");
+        emit ListingCreated(tokenId, "Listing created");
     }
 
-     function removeListing(uint256 tokenId) public {
+    function removeListing(uint256 tokenId) public {
         address tokenOwner = ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
-        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
+        require(
+            _nftOwners[tokenId] == tokenOwner,
+            "Marketplace: Invalid token owner"
+        );
         require(_listingPrices[tokenId] > 0, "Marketplace: NFT not listed");
-        require(tokenOwner == msg.sender, "Marketplace: you are not the owner of this NFT");
-       uint256 listingPrice = _listingPrices[tokenId];
-       require(listingPrice > 0, "Marketplace: NFT not listed");
+        require(
+            tokenOwner == msg.sender,
+            "Marketplace: you are not the owner of this NFT"
+        );
+        uint256 listingPrice = _listingPrices[tokenId];
+        require(listingPrice > 0, "Marketplace: NFT not listed");
 
         _listingPrices[tokenId] = 0;
 
-        
-     emit ListRemoval(tokenId, "Listing removed");
-       
+        emit ListingRemoved(tokenId, "Listing removed");
     }
 
     function purchase(uint256 tokenId) public payable {
         address tokenOwner = ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
-        require(_nftOwners[tokenId] == tokenOwner, "Marketplace: Invalid token owner");
- require(_listingPrices[tokenId] > 0, "Marketplace: NFT not listed");
-        // Verify that the buyer sent the correct amount of ETH for the purchase
-        require(msg.value == _listingPrices[tokenId], "Marketplace: Incorrect payment amount");
+        require(
+            _nftOwners[tokenId] == tokenOwner,
+            "Marketplace: Invalid token owner"
+        );
+        require(_listingPrices[tokenId] > 0, "Marketplace: NFT not listed");
+        require(
+            msg.value == _listingPrices[tokenId],
+            "Marketplace: Incorrect payment amount"
+        );
 
-        // Transfer ownership of the token to the buyer
         transferFrom(tokenOwner, msg.sender, tokenId);
 
-        // Remove the listing by resetting the price to 0
-    
         _listingPrices[tokenId] = 0;
 
-        // Transfer the payment to the seller
         payable(tokenOwner).transfer(msg.value);
+
         emit PurchaseMade(tokenId, msg.sender, tokenOwner, msg.value);
     }
 
-   function _updateOwnership(
-    uint256 tokenId,
-    address from,
-    address to
-) private {
-    require(ownerOf(tokenId) == from, "Marketplace: Invalid token owner");
-    _nftOwners[tokenId] = to;
-    // Update the _ownerNFTs mapping accordingly
-    uint256[] storage ownerNFTs = _ownerNFTs[to];
-    uint256 index;
-    for (uint256 i = 0; i < ownerNFTs.length; i++) {
-        if (ownerNFTs[i] == tokenId) {
-            index = i;
-            break;
+    function _updateOwnership(
+        uint256 tokenId,
+        address from,
+        address to
+    ) private {
+        require(ownerOf(tokenId) == from, "Marketplace: Invalid token owner");
+        _nftOwners[tokenId] = to;
+
+        uint256[] storage ownerNFTs = _ownerNFTs[to];
+        uint256 index;
+        for (uint256 i = 0; i < ownerNFTs.length; i++) {
+            if (ownerNFTs[i] == tokenId) {
+                index = i;
+                break;
+            }
         }
+        if (index < ownerNFTs.length - 1) {
+            ownerNFTs[index] = ownerNFTs[ownerNFTs.length - 1];
+        }
+        ownerNFTs.pop();
     }
-    if (index < ownerNFTs.length - 1) {
-        ownerNFTs[index] = ownerNFTs[ownerNFTs.length - 1];
-    }
-    ownerNFTs.pop();
-}
-
-
-
 }
