@@ -45,7 +45,8 @@ contract MusicNFT is ERC721URIStorage, Ownable {
         string memory genre,
         uint256 releaseDate,
         string memory audioFile,
-        address owner
+        address owner,
+        string memory metadataUri
     ) public {
         uint256 tokenId = _nextNFTId;
         _nextNFTId++;
@@ -66,7 +67,7 @@ contract MusicNFT is ERC721URIStorage, Ownable {
 
         // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
         // For simplicity, we'll use a placeholder URI here.
-        string memory uri = "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
+        string memory uri = metadataUri; // "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);

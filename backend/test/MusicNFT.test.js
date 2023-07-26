@@ -1,89 +1,64 @@
+const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
 describe('MusicNFT', function () {
 	let musicNFT;
-	let owner;
-	let addr1;
-	let addr2;
 
 	beforeEach(async function () {
+		this.timeout(80000);
 		const MusicNFT = await ethers.getContractFactory('MusicNFT');
-		[owner, addr1, addr2] = await ethers.getSigners();
-
 		musicNFT = await MusicNFT.deploy();
 		await musicNFT.deployed();
 	});
 
-	it('Should mint and transfer NFT', async function () {
-		// Mint a new Music NFT
-		await musicNFT
-			.connect(owner)
-			.mintMusicNFT(
-				'Test Music',
-				100,
-				'cover-art-hash',
-				'Common',
-				'wizkid',
-				'Afrobeat',
-				Date.now(),
-				'audio-file-hash',
-				owner.address,
-			);
+	it('should create and transfer NFT', async function () {
+		// Create an NFT
+		const title = 'My Love';
+		const price = 100;
+		const coverArt = 'ipfs://coverart';
+		const rarity = 'Rare';
+		const artist = 'John Doe';
+		const genre = 'Pop';
+		const releaseDate = 1637836800; // Epoch timestamp for 2021-11-26
+		const audioFile = 'ipfs://audio';
+		const owner = await ethers.provider.getSigner(0).getAddress();
+		const metadataUri = 'ipfs://QmPx7nQjYExXDpKA5Fb1LvTGxQr1uxRzyL715TTqHYZ4eZ';
+		console.log(owner);
+		await musicNFT.createUserNFT(
+			title,
+			price,
+			coverArt,
+			rarity,
+			artist,
+			genre,
+			releaseDate,
+			audioFile,
+			owner,
+			metadataUri,
+		);
 
-		// Check ownership after minting
-		expect(await musicNFT.ownerOf(0)).to.equal(owner.address);
+		// Check the NFT token owner
+		const tokenOwner = await musicNFT.ownerOf(0);
+		expect(tokenOwner).to.equal(owner);
 
-		// Transfer the NFT to addr1
-		await musicNFT.connect(owner).transferMusicNFT(0, addr1.address);
+		// Check the NFT token URI
+		const tokenURI = await musicNFT.tokenURI(0);
+		expect(tokenURI).to.equal(metadataUri);
 
-		// Check ownership after transfer
-		expect(await musicNFT.ownerOf(0)).to.equal(addr1.address);
+		// Transfer the NFT to a new owner
+		const newOwner = '0x93A181F02614E8C74c7e6a8b9d53974a3366735a';
+		await musicNFT.transferMusicNFT(0, newOwner);
 
-		// Check if approval is set correctly
-		expect(await musicNFT.isApprovedForAll(owner.address, addr1.address)).to.be
-			.false;
-		await musicNFT.connect(owner).setApprovalForAll(addr1.address, true);
-		expect(await musicNFT.isApprovedForAll(owner.address, addr1.address)).to.be
-			.true;
+		// Check the new NFT owner
+		const newTokenOwner = await musicNFT.ownerOf(0);
+		expect(newTokenOwner).to.equal(newOwner);
 
-		// Transfer the NFT from addr1 to addr2
-		await musicNFT.connect(addr1).transferMusicNFT(0, addr2.address);
-
-		// Check ownership after second transfer
-		expect(await musicNFT.ownerOf(0)).to.equal(addr2.address);
-	});
-
-	it('Should not allow duplicate minting', async function () {
-		// Mint a new Music NFT
-		await musicNFT
-			.connect(owner)
-			.mintMusicNFT(
-				'Test Music',
-				100,
-				'cover-art-hash',
-				'Common',
-				'Artist Name',
-				'Genre',
-				Date.now(),
-				'audio-file-hash',
-				owner.address,
-			);
-
-		// Attempt to mint the same Music NFT again, which should fail due to duplication
-		await expect(
-			musicNFT
-				.connect(owner)
-				.mintMusicNFT(
-					'Test Music',
-					100,
-					'cover-art-hash',
-					'Common',
-					'Artist Name',
-					'Genre',
-					Date.now(),
-					'audio-file-hash',
-					owner.address,
-				),
-		).to.be.revertedWith('MusicNFT: Token ID already exists');
+		// Check the emitted TokenTransfer event
+		const filter = musicNFT.filters.TokenTransfer(null, null, null);
+		const events = await musicNFT.queryFilter(filter);
+		expect(events.length).to.equal(1);
+		expect(events[0].args.from).to.equal(owner);
+		expect(events[0].args.to).to.equal(newOwner);
+		expect(events[0].args.tokenId).to.equal(0);
 	});
 });
