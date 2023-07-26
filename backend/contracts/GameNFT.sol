@@ -5,25 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GamingNFT is ERC721, Ownable {
-    struct GamingItem {
-        uint256 id;
-        string name;
-        string description;
-        uint256 price;
-        string image;
-        string rarity;
-        address owner;
-        string level;
-        string abilities;
-        // ItemStats stats;
-    }
-
-    // struct ItemStats {
-    //     uint256 baseAttackPower;
-    //     uint256 baseDefensePower;
-    //     uint256 health;
-    // }
+contract GamingNFT is ERC721URIStorage, Ownable {
     struct GamingNFTInfo {
         string name;
         string description;
@@ -40,8 +22,10 @@ contract GamingNFT is ERC721, Ownable {
 
     constructor() ERC721("GamingNFT", "GAME") {}
 
-    mapping(uint256 => GamingItem) private _gamingNFTs;
+    mapping(uint256 => GamingNFTInfo) private _gamingNFTs;
+
     uint256 private _nextNFTId = 1;
+
     event TokenTransfer(
         address indexed from,
         address indexed to,
@@ -50,27 +34,10 @@ contract GamingNFT is ERC721, Ownable {
     event TokenMinted(address indexed owner, uint256 tokenId);
     event TokenUpdated(uint256 tokenId);
 
-
-function  createUserNFT( string memory name, uint256 price, string memory image, string memory rarity, string memory level, string memory abilities, address owner, uint256 baseAttackPower, uint256 baseDefensePower, uint256 health) public {
-    uint256 tokenId = _nextNFTId;
-    _nextNFTId++;
-
-    GamingItem memory newGamingNFT = GamingItem(
-        name,
-        image,
-        price,
-        rarity,
-        level,
-        abilities,
-        owner,
-        baseAttackPower,
-        baseDefensePower,
-        health,
-    );
-    _gamingNFTs[tokenId] = newGamingNFT;
-}
-
-    function mintGamingNFT(GamingNFTInfo memory nftInfo) public onlyOwner {
+    function createUserNFT(
+        GamingNFTInfo memory nftInfo,
+        string memory metadataUri
+    ) public {
         uint256 tokenId = _nextNFTId;
         _nextNFTId++;
 
@@ -87,34 +54,31 @@ function  createUserNFT( string memory name, uint256 price, string memory image,
 
         require(!_exists(tokenId), "NFT already exists");
 
-        _safeMint(nftInfo.owner, tokenId);
+        GamingNFTInfo memory newGamingNFT = GamingNFTInfo(
+            nftInfo.name,
+            nftInfo.description,
+            nftInfo.price,
+            nftInfo.image,
+            nftInfo.rarity,
+            nftInfo.level,
+            nftInfo.abilities,
+            nftInfo.baseAttackPower,
+            nftInfo.baseDefensePower,
+            nftInfo.health,
+            nftInfo.owner
+        );
 
-        // ItemStats memory stats = ItemStats(
-        //     totalAttackPower,
-        //     totalDefensePower,
-        //     nftInfo.health
-        // );
+        _gamingNFTs[tokenId] = newGamingNFT;
+        string memory uri = metadataUri;
 
-        GamingItem storage newGamingNFT = _gamingNFTs[tokenId];
-        newGamingNFT.id = tokenId;
-        newGamingNFT.name = nftInfo.name;
-        newGamingNFT.description = nftInfo.description;
-        newGamingNFT.price = nftInfo.price;
-        newGamingNFT.image = nftInfo.image;
-        newGamingNFT.rarity = nftInfo.rarity;
-        newGamingNFT.owner = nftInfo.owner;
-        newGamingNFT.level = nftInfo.level;
-        // newGamingNFT.stats = stats;
-        newGamingNFT.abilities = nftInfo.abilities;
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, uri);
 
-        emit TokenMinted(nftInfo.owner, tokenId);
+        emit TokenMinted(msg.sender, tokenId);
     }
 
-    function transferGamingNFT(
-        uint256 tokenId,
-        address newOwner
-    ) public {
-        address tokenOwner = ownerOf(tokenId);
+    function transferGamingNFT(uint256 tokenId, address newOwner) public {
+        address tokenOwner = _ownerOf(tokenId);
         require(
             tokenOwner == msg.sender ||
                 isApprovedForAll(tokenOwner, msg.sender),
@@ -124,19 +88,19 @@ function  createUserNFT( string memory name, uint256 price, string memory image,
 
         _transfer(tokenOwner, newOwner, tokenId);
 
-        GamingItem storage gamingNFT = _gamingNFTs[tokenId];
+        GamingNFTInfo storage gamingNFT = _gamingNFTs[tokenId];
         gamingNFT.owner = newOwner;
 
         emit TokenTransfer(tokenOwner, newOwner, tokenId);
     }
 
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        return _gamingNFTs[tokenId].owner;
-    }
+    // function ownerOf(uint256 tokenId) public view override returns (address) {
+    //     return _gamingNFTs[tokenId].owner;
+    // }
 
     function getGamingNFT(
         uint256 tokenId
-    ) public view returns (GamingItem memory) {
+    ) public view returns (GamingNFTInfo memory) {
         return _gamingNFTs[tokenId];
     }
 
@@ -146,21 +110,14 @@ function  createUserNFT( string memory name, uint256 price, string memory image,
         string memory rarity,
         string memory level,
         string memory abilities
-    )
-        public
-        // uint256 baseAttackPower,
-        // uint256 baseDefensePower,
-
-        onlyOwner
-    {
+    ) public onlyOwner {
         require(_exists(tokenId), "GamingNFT: NFT does not exist");
-        GamingItem storage gamingNFT = _gamingNFTs[tokenId];
-
+        GamingNFTInfo storage gamingNFT = _gamingNFTs[tokenId];
         gamingNFT.image = image;
         gamingNFT.rarity = rarity;
         gamingNFT.level = level;
         gamingNFT.abilities = abilities;
-        // gamingNFT.stats = ItemStats(baseAttackPower, baseDefensePower, health);
+
         emit TokenUpdated(tokenId);
     }
 
@@ -185,5 +142,15 @@ function  createUserNFT( string memory name, uint256 price, string memory image,
         );
 
         _setApprovalForAll(msg.sender, operator, approved);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 }

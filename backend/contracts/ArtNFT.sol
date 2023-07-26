@@ -27,10 +27,6 @@ contract ArtNFT is ERC721URIStorage, Ownable {
     );
     event TokenMinted(address indexed owner, uint256 tokenId);
 
-    // function ownerOf(uint256 tokenId) public view override returns (address) {
-    //     return ownerOf(tokenId);
-    // }
-
     function createUserNFT(
         string memory title,
         uint256 price,
@@ -38,7 +34,8 @@ contract ArtNFT is ERC721URIStorage, Ownable {
         string memory artist,
         uint256 yearCreated,
         string memory image,
-        address owner
+        address owner,
+        string memory metadataUri
     ) public {
         uint256 tokenId = _nextNFTId;
         _nextNFTId++;
@@ -57,7 +54,7 @@ contract ArtNFT is ERC721URIStorage, Ownable {
 
         // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
         // For simplicity, we'll use a placeholder URI here.
-        string memory uri = "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
+        string memory uri = metadataUri; // Replace with the actual IPFS URI
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);
