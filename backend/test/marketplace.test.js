@@ -34,7 +34,6 @@ describe('Marketplace', () => {
 		const audioFile = 'ipfs://audio';
 		const owner = deployer.address;
 		const metadataUri = 'ipfs://QmPx7nQjYExXDpKA5Fb1LvTGxQr1uxRzyL715TTqHYZ4eZ';
-		console.log(owner);
 		await nftContract.createUserNFT(
 			title,
 			price,
