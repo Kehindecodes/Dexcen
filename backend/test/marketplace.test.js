@@ -51,12 +51,12 @@ describe('Marketplace', () => {
 
 	it('Should create a new listing for an NFT', async () => {
 		const price = ethers.utils.parseEther('0.1');
-
+		await marketplace.approveMarketplace(nftContract.address, tokenId);
 		// Create a new listing for the NFT
 		await marketplace.createListing(nftContract.address, tokenId, price);
 
 		// Check if the NFT listing exists
-		const listing = await marketplace._listings(tokenId);
+		const listing = await marketplace.getOneListing(tokenId);
 		expect(listing.nftContract).to.equal(nftContract.address);
 		expect(listing.tokenId).to.equal(tokenId);
 		expect(listing.seller).to.equal(deployer.address);
@@ -69,7 +69,7 @@ describe('Marketplace', () => {
 
 	it('Should remove an existing listing for an NFT', async () => {
 		const price = ethers.utils.parseEther('0.1');
-
+		await marketplace.approveMarketplace(nftContract.address, tokenId);
 		// Create a new listing for the NFT
 		await marketplace.createListing(nftContract.address, tokenId, price);
 
@@ -83,7 +83,7 @@ describe('Marketplace', () => {
 
 	it('Should purchase an NFT from the marketplace', async () => {
 		const price = ethers.utils.parseEther('0.1');
-
+		await marketplace.approveMarketplace(nftContract.address, tokenId);
 		// Create a new listing for the NFT
 		await marketplace.createListing(nftContract.address, tokenId, price);
 

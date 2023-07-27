@@ -13,6 +13,7 @@ contract Marketplace is Ownable {
     }
 
     mapping(uint256 => Listing) private _listings;
+    mapping(address => mapping(uint256 => bool)) private _approvedContracts;
 
     event ListingCreated(
         address indexed nftContract,
@@ -28,6 +29,20 @@ contract Marketplace is Ownable {
         address seller,
         uint256 price
     );
+
+    function approveMarketplace(address nftContract, uint256 tokenId) external {
+        address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
+        require(
+            tokenOwner == msg.sender,
+            "Marketplace: Only the NFT owner can approve"
+        );
+
+        // Approve the Marketplace contract to transfer the NFT
+        ERC721URIStorage(nftContract).approve(address(this), tokenId);
+
+        // Mark the contract as approved for this NFT
+        _approvedContracts[nftContract][tokenId] = true;
+    }
 
     // Create a new listing for an NFT
     function createListing(
@@ -46,17 +61,23 @@ contract Marketplace is Ownable {
         );
 
         // Check if the caller (msg.sender) is approved to transfer the NFT
-        require(
-            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
-                ERC721URIStorage(nftContract).isApprovedForAll(
-                    owner(),
-                    msg.sender
-                ),
-            "Marketplace: Caller is not approved to transfer the NFT"
-        );
+        // require(
+        //     ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
+        //         ERC721URIStorage(nftContract).isApprovedForAll(
+        //             owner(),
+        //             msg.sender
+        //         ),
+        //     "Marketplace: Caller is not approved to transfer the NFT"
+        // );
 
         address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
+
+        // Check if the Marketplace contract is approved for this NFT
+        require(
+            _approvedContracts[nftContract][tokenId] == true,
+            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
+        );
 
         // Transfer the NFT from the owner to this contract
         ERC721URIStorage(nftContract).transferFrom(
@@ -87,14 +108,10 @@ contract Marketplace is Ownable {
             "Marketplace: Not the seller of this NFT"
         );
 
-        // Check if the caller (msg.sender) is approved to transfer the NFT
+        // Check if the Marketplace contract is approved for this NFT
         require(
-            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
-                ERC721URIStorage(nftContract).isApprovedForAll(
-                    owner(),
-                    msg.sender
-                ),
-            "Marketplace: Caller is not approved to transfer the NFT"
+            _approvedContracts[nftContract][tokenId] == true,
+            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
         );
 
         // Transfer the NFT back to the seller
@@ -127,14 +144,10 @@ contract Marketplace is Ownable {
             "Marketplace: Incorrect payment amount"
         );
 
-        // Check if the caller (msg.sender) is approved to transfer the NFT
+        // Check if the Marketplace contract is approved for this NFT
         require(
-            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
-                ERC721URIStorage(nftContract).isApprovedForAll(
-                    owner(),
-                    msg.sender
-                ),
-            "Marketplace: Caller is not approved to transfer the NFT"
+            _approvedContracts[nftContract][tokenId] == true,
+            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
         );
 
         // Transfer the NFT from this contract to the buyer
@@ -167,5 +180,11 @@ contract Marketplace is Ownable {
         uint256 tokenId
     ) private view returns (bool) {
         return _listings[tokenId].nftContract == nftContract;
+    }
+
+    function getOneListing(
+        uint256 tokenId
+    ) public view returns (Listing memory) {
+        return _listings[tokenId];
     }
 }

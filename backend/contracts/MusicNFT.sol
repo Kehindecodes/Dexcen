@@ -81,11 +81,6 @@ contract MusicNFT is ERC721URIStorage, Ownable {
             "MusicNFT: Not authorized to transfer"
         );
 
-        // If the new owner is the Marketplace contract, approve it to transfer the NFT
-        if (newOwner == address(this)) {
-            _approve(newOwner, tokenId);
-        }
-
         _transfer(currentOwner, newOwner, tokenId);
 
         Music storage musicNFT = _musicNFTs[tokenId];
@@ -95,13 +90,7 @@ contract MusicNFT is ERC721URIStorage, Ownable {
     }
 
     function approve(address to, uint256 tokenId) public override {
-        address tokenOwner = _ownerOf(tokenId);
-        require(
-            tokenOwner == msg.sender ||
-                isApprovedForAll(tokenOwner, msg.sender),
-            "musicNFT: Not authorized to approve"
-        );
-
+        // address tokenOwner = _ownerOf(tokenId);
         _approve(to, tokenId);
     }
 
@@ -109,10 +98,10 @@ contract MusicNFT is ERC721URIStorage, Ownable {
         address operator,
         bool approved
     ) public override {
-        require(
-            operator != msg.sender,
-            "musicNFT: You cannot set approval for yourself"
-        );
+        // require(
+        //     operator != msg.sender,
+        //     "musicNFT: You cannot set approval for yourself"
+        // );
 
         _setApprovalForAll(msg.sender, operator, approved);
     }
