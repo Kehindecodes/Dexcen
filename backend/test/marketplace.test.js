@@ -19,31 +19,29 @@ describe('Marketplace', () => {
 		[deployer, addr1, addr2] = await ethers.getSigners();
 
 		// Deploy a sample NFT contract and get its deployed instance
-		const MusicNFT = await ethers.getContractFactory('MusicNFT');
-		nftContract = await MusicNFT.deploy();
+		const ArtNFT = await ethers.getContractFactory('ArtNFT');
+		nftContract = await ArtNFT.deploy();
 		await nftContract.deployed();
 
 		// Mint a sample NFT to the owner's address
-		const title = 'My Love';
-		const price = 100;
-		const coverArt = 'ipfs://coverart';
+		const title = 'My Artwork';
+		const price = ethers.utils.parseEther('0.1');
 		const rarity = 'Rare';
 		const artist = 'John Doe';
-		const genre = 'Pop';
-		const releaseDate = 1637836800; // Epoch timestamp for 2021-11-26
-		const audioFile = 'ipfs://audio';
-		const owner = deployer.address;
-		const metadataUri = 'ipfs://QmPx7nQjYExXDpKA5Fb1LvTGxQr1uxRzyL715TTqHYZ4eZ';
+		const yearCreated = 2023;
+		const image = 'https://example.com/artwork.jpg';
+		const ownerAddress = deployer.address;
+		const metadataUri = 'ipfs://QmPx7nQjYExXDpKA5Fb1LvTGxQr1uxRzyL715TTqHYZ4eZ'; // Replace with the actual IPFS URI
+
+		// Call the createUserNFT function to mint an NFT
 		await nftContract.createUserNFT(
 			title,
 			price,
-			coverArt,
 			rarity,
 			artist,
-			genre,
-			releaseDate,
-			audioFile,
-			owner,
+			yearCreated,
+			image,
+			ownerAddress,
 			metadataUri,
 		);
 	});

@@ -98,11 +98,6 @@ contract MusicNFT is ERC721URIStorage, Ownable {
         address operator,
         bool approved
     ) public override {
-        // require(
-        //     operator != msg.sender,
-        //     "musicNFT: You cannot set approval for yourself"
-        // );
-
         _setApprovalForAll(msg.sender, operator, approved);
     }
 

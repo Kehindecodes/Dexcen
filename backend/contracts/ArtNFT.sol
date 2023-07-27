@@ -52,9 +52,7 @@ contract ArtNFT is ERC721URIStorage, Ownable {
 
         _artNFTs[tokenId] = newArtNFT;
 
-        // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
-        // For simplicity, we'll use a placeholder URI here.
-        string memory uri = metadataUri; // Replace with the actual IPFS URI
+        string memory uri = metadataUri;
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);
@@ -80,13 +78,6 @@ contract ArtNFT is ERC721URIStorage, Ownable {
     }
 
     function approve(address to, uint256 tokenId) public override {
-        address tokenOwner = _ownerOf(tokenId);
-        require(
-            tokenOwner == msg.sender ||
-                isApprovedForAll(tokenOwner, msg.sender),
-            "ArtNFT: Not authorized to approve"
-        );
-
         _approve(to, tokenId);
     }
 
@@ -94,11 +85,6 @@ contract ArtNFT is ERC721URIStorage, Ownable {
         address operator,
         bool approved
     ) public override {
-        require(
-            operator != msg.sender,
-            "ArtNFT: You cannot set approval for yourself"
-        );
-
         _setApprovalForAll(msg.sender, operator, approved);
     }
 
