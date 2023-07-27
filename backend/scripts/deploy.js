@@ -8,7 +8,19 @@ async function main() {
 	const MusicNFT = await ethers.getContractFactory('MusicNFT');
 	const musicNFT = await MusicNFT.deploy();
 
-	console.log('Contract address:', musicNFT.address);
+	const ArtNFT = await ethers.getContractFactory('ArtNFT');
+	const artNFT = await ArtNFT.deploy();
+
+	const GamingNFT = await ethers.getContractFactory('GamingNFT');
+	const gamingNFT = await GamingNFT.deploy();
+
+	const Marketplace = await ethers.getContractFactory('Marketplace');
+	const marketplace = await Marketplace.deploy();
+
+	console.log(' musicNFT Contract address:', musicNFT.address);
+	console.log(' gamingNFT  Contract address:', gamingNFT.address);
+	console.log(' artNFT Contract address:', artNFT.address);
+	console.log('  Marketplace Contract address:', marketplace.address);
 }
 
 main()
