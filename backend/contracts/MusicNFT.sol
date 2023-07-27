@@ -65,10 +65,7 @@ contract MusicNFT is ERC721URIStorage, Ownable {
 
         _musicNFTs[tokenId] = newMusicNFT;
 
-        // In a real-world application, you would likely store the metadata URI on IPFS and get the URI here.
-        // For simplicity, we'll use a placeholder URI here.
-        string memory uri = metadataUri; // "ipfs://QmXYZ..."; // Replace with the actual IPFS URI
-
+        string memory uri = metadataUri;
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);
 
@@ -83,6 +80,11 @@ contract MusicNFT is ERC721URIStorage, Ownable {
                 isApprovedForAll(currentOwner, msg.sender),
             "MusicNFT: Not authorized to transfer"
         );
+
+        // If the new owner is the Marketplace contract, approve it to transfer the NFT
+        if (newOwner == address(this)) {
+            _approve(newOwner, tokenId);
+        }
 
         _transfer(currentOwner, newOwner, tokenId);
 

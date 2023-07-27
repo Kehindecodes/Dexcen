@@ -45,6 +45,16 @@ contract Marketplace is Ownable {
             "Marketplace: NFT already listed"
         );
 
+        // Check if the caller (msg.sender) is approved to transfer the NFT
+        require(
+            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
+                ERC721URIStorage(nftContract).isApprovedForAll(
+                    owner(),
+                    msg.sender
+                ),
+            "Marketplace: Caller is not approved to transfer the NFT"
+        );
+
         address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
 
@@ -77,6 +87,16 @@ contract Marketplace is Ownable {
             "Marketplace: Not the seller of this NFT"
         );
 
+        // Check if the caller (msg.sender) is approved to transfer the NFT
+        require(
+            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
+                ERC721URIStorage(nftContract).isApprovedForAll(
+                    owner(),
+                    msg.sender
+                ),
+            "Marketplace: Caller is not approved to transfer the NFT"
+        );
+
         // Transfer the NFT back to the seller
         ERC721URIStorage(nftContract).transferFrom(
             address(this),
@@ -105,6 +125,16 @@ contract Marketplace is Ownable {
         require(
             msg.value == listing.price,
             "Marketplace: Incorrect payment amount"
+        );
+
+        // Check if the caller (msg.sender) is approved to transfer the NFT
+        require(
+            ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
+                ERC721URIStorage(nftContract).isApprovedForAll(
+                    owner(),
+                    msg.sender
+                ),
+            "Marketplace: Caller is not approved to transfer the NFT"
         );
 
         // Transfer the NFT from this contract to the buyer
@@ -138,7 +168,4 @@ contract Marketplace is Ownable {
     ) private view returns (bool) {
         return _listings[tokenId].nftContract == nftContract;
     }
-
-    // Additional marketplace functionalities and helper functions
-    // ...
 }
