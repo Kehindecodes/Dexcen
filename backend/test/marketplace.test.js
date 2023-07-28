@@ -7,7 +7,7 @@ describe('Marketplace', () => {
 	let addr1;
 	let addr2;
 	let nftContract;
-	const tokenId = 0;
+	const tokenId = 1;
 
 	beforeEach(async () => {
 		// Deploy the contract and get the deployed instance
@@ -19,31 +19,26 @@ describe('Marketplace', () => {
 		[deployer, addr1, addr2] = await ethers.getSigners();
 
 		// Deploy a sample NFT contract and get its deployed instance
-		const ArtNFT = await ethers.getContractFactory('ArtNFT');
-		nftContract = await ArtNFT.deploy();
+		const GamingNFT = await ethers.getContractFactory('GamingNFT');
+		nftContract = await GamingNFT.deploy();
 		await nftContract.deployed();
 
 		// Mint a sample NFT to the owner's address
-		const title = 'My Artwork';
-		const price = ethers.utils.parseEther('0.1');
-		const rarity = 'Rare';
-		const artist = 'John Doe';
-		const yearCreated = 2023;
-		const image = 'https://example.com/artwork.jpg';
-		const ownerAddress = deployer.address;
-		const metadataUri = 'ipfs://QmPx7nQjYExXDpKA5Fb1LvTGxQr1uxRzyL715TTqHYZ4eZ'; // Replace with the actual IPFS URI
+		const nftInfo = {
+			name: 'satoshi',
+			description: 'freedom fighter',
+			price: ethers.utils.parseEther('0.003'),
+			image: 'https://example.com/gaming_nft.jpg',
+			rarity: 'Rare',
+			level: 'Advanced',
+			abilities: 'Fireball, Teleport',
+			baseAttackPower: 100,
+			baseDefensePower: 80,
+			health: 200,
+			owner: deployer.address,
+		};
 
-		// Call the createUserNFT function to mint an NFT
-		await nftContract.createUserNFT(
-			title,
-			price,
-			rarity,
-			artist,
-			yearCreated,
-			image,
-			ownerAddress,
-			metadataUri,
-		);
+		await nftContract.createUserNFT(nftInfo, 'ipfs://QmXYZ.nnvc..');
 	});
 
 	it('Should create a new listing for an NFT', async () => {

@@ -122,13 +122,6 @@ contract GamingNFT is ERC721URIStorage, Ownable {
     }
 
     function approve(address to, uint256 tokenId) public override {
-        address tokenOwner = ownerOf(tokenId);
-        require(
-            tokenOwner == msg.sender ||
-                isApprovedForAll(tokenOwner, msg.sender),
-            "GamingNFT: Not authorized to approve"
-        );
-
         _approve(to, tokenId);
     }
 
@@ -136,11 +129,6 @@ contract GamingNFT is ERC721URIStorage, Ownable {
         address operator,
         bool approved
     ) public override {
-        require(
-            operator != msg.sender,
-            "GamingNFT: You cannot set approval for yourself"
-        );
-
         _setApprovalForAll(msg.sender, operator, approved);
     }
 
