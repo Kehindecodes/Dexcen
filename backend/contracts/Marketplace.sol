@@ -4,7 +4,11 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./Escrow.sol";
+
 contract Marketplace is Ownable {
+    address public escrowContract;
+    Escrow public escrow;
     struct Listing {
         address nftContract;
         uint256 tokenId;
@@ -44,6 +48,15 @@ contract Marketplace is Ownable {
         _approvedContracts[nftContract][tokenId] = true;
     }
 
+    function setEscrowContract(address escrowAddress) external onlyOwner {
+        require(
+            escrowAddress != address(0),
+            "Marketplace: Invalid Escrow contract address"
+        );
+        escrowContract = escrowAddress;
+        escrow = Escrow(escrowAddress);
+    }
+
     // Create a new listing for an NFT
     function createListing(
         address nftContract,
@@ -60,16 +73,6 @@ contract Marketplace is Ownable {
             "Marketplace: NFT already listed"
         );
 
-        // Check if the caller (msg.sender) is approved to transfer the NFT
-        // require(
-        //     ERC721URIStorage(nftContract).getApproved(tokenId) == msg.sender ||
-        //         ERC721URIStorage(nftContract).isApprovedForAll(
-        //             owner(),
-        //             msg.sender
-        //         ),
-        //     "Marketplace: Caller is not approved to transfer the NFT"
-        // );
-
         address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
 
@@ -79,10 +82,10 @@ contract Marketplace is Ownable {
             "Marketplace: The Marketplace contract is not approved to transfer this NFT"
         );
 
-        // Transfer the NFT from the owner to this contract
+        // Transfer the NFT from the owner to the Escrow contract
         ERC721URIStorage(nftContract).transferFrom(
             tokenOwner,
-            address(this),
+            escrowContract,
             tokenId
         );
 
@@ -150,18 +153,13 @@ contract Marketplace is Ownable {
             "Marketplace: The Marketplace contract is not approved to transfer this NFT"
         );
 
-        // Transfer the NFT from this contract to the buyer
-        ERC721URIStorage(nftContract).transferFrom(
-            address(this),
-            msg.sender,
-            tokenId
+        // Create an escrow contract to hold the NFT and payment
+        escrow.createEscrow{value: msg.value}(
+            nftContract,
+            tokenId,
+            listing.seller,
+            listing.price
         );
-
-        // Transfer the payment to the seller
-        (bool success, ) = payable(listing.seller).call{value: listing.price}(
-            ""
-        );
-        require(success, "Marketplace: Payment transfer failed");
 
         delete _listings[tokenId];
 
@@ -186,5 +184,17 @@ contract Marketplace is Ownable {
         uint256 tokenId
     ) public view returns (Listing memory) {
         return _listings[tokenId];
+    }
+
+    // Function for the buyer to confirm the receipt of the NFT and release payment
+    function confirmReceipt(uint256 tokenId) external {
+        // Call the confirmReceipt function of the Escrow contract
+        escrow.confirmReceipt(tokenId);
+    }
+
+    // Function for the owner to cancel the escrow
+    function cancelEscrow(uint256 tokenId) external onlyOwner {
+        // Call the cancelEscrow function of the Escrow contract
+        escrow.cancelEscrow(tokenId);
     }
 }
