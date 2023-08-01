@@ -39,11 +39,22 @@ contract Escrow is Ownable {
         );
         require(amount > 0, "Escrow: Invalid payment amount");
 
-        ERC721URIStorage(nftContract).transferFrom(
-            seller,
-            address(this),
-            tokenId
+        // Check if the Marketplace contract is approved for this NFT
+        require(
+            ERC721(nftContract).getApproved(tokenId) == address(this),
+            "Escrow: The escrow contract is not approved to transfer this NFT"
         );
+        // Transfer the NFT from the seller to this escrow contract
+        ERC721(nftContract).transferFrom(seller, address(this), tokenId);
+
+        // Check if the Escrow contract is approved for this NFT
+        require(
+            ERC721(nftContract).getApproved(tokenId) == address(this),
+            "Escrow: The escrow contract is not approved to transfer this NFT"
+        );
+
+        // Transfer the NFT from the seller to this escrow contract
+        ERC721(nftContract).transferFrom(seller, address(this), tokenId);
 
         _escrows[tokenId] = EscrowData(
             msg.sender,
@@ -58,7 +69,7 @@ contract Escrow is Ownable {
     }
 
     // Function for the buyer to confirm the receipt of the NFT and release payment
-    function confirmReceipt(uint256 tokenId) external {
+    function confirmReceipt(uint256 tokenId, address nftContract) external {
         EscrowData storage escrow = _escrows[tokenId];
         require(
             escrow.buyer == msg.sender,
@@ -67,7 +78,7 @@ contract Escrow is Ownable {
         require(!escrow.completed, "Escrow: Transaction already completed");
         escrow.completed = true;
 
-        ERC721URIStorage(ERC721URIStorage(msg.sender)).transferFrom(
+        ERC721URIStorage(nftContract).transferFrom(
             address(this),
             escrow.buyer,
             escrow.tokenId
@@ -85,7 +96,7 @@ contract Escrow is Ownable {
         EscrowData storage escrow = _escrows[tokenId];
         require(!escrow.completed, "Escrow: Transaction already completed");
 
-        ERC721URIStorage(ERC721URIStorage(address(this))).transferFrom(
+        ERC721URIStorage(address(this)).transferFrom(
             address(this),
             escrow.seller,
             tokenId

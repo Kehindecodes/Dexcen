@@ -17,7 +17,9 @@ contract Marketplace is Ownable {
     }
 
     mapping(uint256 => Listing) private _listings;
-    mapping(address => mapping(uint256 => bool)) private _approvedContracts;
+    mapping(uint256 => uint256) private _listingPrices;
+
+    // mapping(address => mapping(uint256 => bool)) private _approvedContracts;
 
     event ListingCreated(
         address indexed nftContract,
@@ -34,7 +36,7 @@ contract Marketplace is Ownable {
         uint256 price
     );
 
-    function approveMarketplace(address nftContract, uint256 tokenId) external {
+    function approveEscrow(address nftContract, uint256 tokenId) external {
         address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         require(
             tokenOwner == msg.sender,
@@ -42,10 +44,7 @@ contract Marketplace is Ownable {
         );
 
         // Approve the Marketplace contract to transfer the NFT
-        ERC721URIStorage(nftContract).approve(address(this), tokenId);
-
-        // Mark the contract as approved for this NFT
-        _approvedContracts[nftContract][tokenId] = true;
+        ERC721URIStorage(nftContract).approve(escrowContract, tokenId);
     }
 
     function setEscrowContract(address escrowAddress) external onlyOwner {
@@ -72,22 +71,8 @@ contract Marketplace is Ownable {
             !_listingExists(nftContract, tokenId),
             "Marketplace: NFT already listed"
         );
-
         address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         require(tokenOwner != address(0), "Marketplace: Invalid token");
-
-        // Check if the Marketplace contract is approved for this NFT
-        require(
-            _approvedContracts[nftContract][tokenId] == true,
-            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
-        );
-
-        // Transfer the NFT from the owner to the Escrow contract
-        ERC721URIStorage(nftContract).transferFrom(
-            tokenOwner,
-            escrowContract,
-            tokenId
-        );
 
         _listings[tokenId] = Listing(nftContract, tokenId, tokenOwner, price);
 
@@ -104,24 +89,12 @@ contract Marketplace is Ownable {
             _listingExists(nftContract, tokenId),
             "Marketplace: NFT not listed"
         );
-
+        address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
         Listing storage listing = _listings[tokenId];
+        listing.seller = tokenOwner;
         require(
-            listing.seller == msg.sender,
+            _listings[tokenId].seller == msg.sender,
             "Marketplace: Not the seller of this NFT"
-        );
-
-        // Check if the Marketplace contract is approved for this NFT
-        require(
-            _approvedContracts[nftContract][tokenId] == true,
-            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
-        );
-
-        // Transfer the NFT back to the seller
-        ERC721URIStorage(nftContract).transferFrom(
-            address(this),
-            listing.seller,
-            tokenId
         );
 
         delete _listings[tokenId];
@@ -141,23 +114,26 @@ contract Marketplace is Ownable {
         );
 
         Listing memory listing = _listings[tokenId];
+
         require(listing.price > 0, "Marketplace: NFT not listed for sale");
         require(
             msg.value == listing.price,
             "Marketplace: Incorrect payment amount"
         );
 
-        // Check if the Marketplace contract is approved for this NFT
-        require(
-            _approvedContracts[nftContract][tokenId] == true,
-            "Marketplace: The Marketplace contract is not approved to transfer this NFT"
-        );
+        // // Check if the Marketplace contract is approved for this NFT
+        // require(
+        //     _approvedContracts[nftContract][tokenId] == true,
+        //     "Marketplace: The Marketplace contract is not approved to transfer this NFT"
+        // );
+
+        address tokenOwner = ERC721URIStorage(nftContract).ownerOf(tokenId);
 
         // Create an escrow contract to hold the NFT and payment
         escrow.createEscrow{value: msg.value}(
             nftContract,
             tokenId,
-            listing.seller,
+            tokenOwner,
             listing.price
         );
 
@@ -167,7 +143,7 @@ contract Marketplace is Ownable {
             nftContract,
             tokenId,
             msg.sender,
-            listing.seller,
+            tokenOwner,
             listing.price
         );
     }
@@ -187,9 +163,9 @@ contract Marketplace is Ownable {
     }
 
     // Function for the buyer to confirm the receipt of the NFT and release payment
-    function confirmReceipt(uint256 tokenId) external {
+    function confirmReceipt(uint256 tokenId, address nftContract) external {
         // Call the confirmReceipt function of the Escrow contract
-        escrow.confirmReceipt(tokenId);
+        escrow.confirmReceipt(tokenId, nftContract);
     }
 
     // Function for the owner to cancel the escrow
