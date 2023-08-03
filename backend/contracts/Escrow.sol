@@ -47,15 +47,6 @@ contract Escrow is Ownable {
         // Transfer the NFT from the seller to this escrow contract
         ERC721(nftContract).transferFrom(seller, address(this), tokenId);
 
-        // Check if the Escrow contract is approved for this NFT
-        require(
-            ERC721(nftContract).getApproved(tokenId) == address(this),
-            "Escrow: The escrow contract is not approved to transfer this NFT"
-        );
-
-        // Transfer the NFT from the seller to this escrow contract
-        ERC721(nftContract).transferFrom(seller, address(this), tokenId);
-
         _escrows[tokenId] = EscrowData(
             msg.sender,
             seller,
@@ -76,9 +67,9 @@ contract Escrow is Ownable {
             "Escrow: Only the buyer can confirm the receipt"
         );
         require(!escrow.completed, "Escrow: Transaction already completed");
-        escrow.completed = true;
 
-        ERC721URIStorage(nftContract).transferFrom(
+        // transfer NFT to the buyer
+        ERC721(nftContract).safeTransferFrom(
             address(this),
             escrow.buyer,
             escrow.tokenId
@@ -86,7 +77,8 @@ contract Escrow is Ownable {
 
         // Transfer the payment to the seller
         payable(escrow.seller).transfer(escrow.amount);
-
+        escrow.released = true;
+        escrow.completed = true;
         emit NFTTransferred(tokenId);
         emit PaymentReleased(tokenId);
     }
@@ -96,7 +88,7 @@ contract Escrow is Ownable {
         EscrowData storage escrow = _escrows[tokenId];
         require(!escrow.completed, "Escrow: Transaction already completed");
 
-        ERC721URIStorage(address(this)).transferFrom(
+        ERC721(address(this)).transferFrom(
             address(this),
             escrow.seller,
             tokenId
@@ -105,5 +97,11 @@ contract Escrow is Ownable {
         escrow.completed = true;
 
         emit NFTTransferred(tokenId);
+    }
+
+    function getEscrowData(
+        uint256 tokenId
+    ) public view returns (EscrowData memory) {
+        return _escrows[tokenId];
     }
 }
